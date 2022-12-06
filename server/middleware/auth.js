@@ -13,8 +13,6 @@ const auth = async (req, res, next) => {
             req.userId = decodedData?.id
         } else {
             decodedData = jwt.decode(token)
-            const googleId = decodedData?.sub.toString()
-            const user = await UserModel.findOne({ googleId })
             req.userId = user?._id
         }
         next()
