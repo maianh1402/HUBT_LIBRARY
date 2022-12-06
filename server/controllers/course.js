@@ -17,6 +17,7 @@ export const createCourse = async (req, res) => {
 }
 
 export const getCourses = async (req, res) => {
+    const { page } = req.query;
     try {
         const courses = await CourseModal.find()
         res.status(200).json(courses)
@@ -78,5 +79,68 @@ export const updatedCourse = async (req, res) => {
         res.json(updatedCourse);
     } catch (error) {
         res.status(404).json({ message: "Đã xảy ra lỗi!" });
+    }
+};
+
+
+export const getCoursesBySearch = async (req, res) => {
+    const { searchQuery } = req.query;
+    try {
+        const title = new RegExp(searchQuery, "i");
+        const courses = await CourseModal.find({ title });
+        res.json(courses);
+    } catch (error) {
+        res.status(404).json({ message: "Đã xảy ra lỗi!" });
+    }
+};
+
+export const getCoursesByTag = async (req, res) => {
+    const { tag } = req.params;
+    try {
+        const courses = await CourseModal.find({ tags: { $in: tag } });
+        res.json(courses);
+    } catch (error) {
+        res.status(404).json({ message: "Đã xảy ra lỗi!" });
+    }
+};
+
+export const getRelatedCourses = async (req, res) => {
+    const tags = req.body;
+    try {
+        const courses = await CourseModal.find({ tags: { $in: tags } });
+        res.json(courses);
+    } catch (error) {
+        res.status(404).json({ message: "Đã xảy ra lỗi!" });
+    }
+};
+
+export const likeCourse = async (req, res) => {
+    const { id } = req.params;
+    try {
+        if (!req.userId) {
+            return res.json({ message: "Người dùng không dược xác thực!" });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(404).json({ message: `Không có khóa học: ${id}` });
+        }
+
+        const course = await CourseModal.findById(id);
+
+        const index = course.likes.findIndex((id) => id === String(req.userId));
+
+        if (index === -1) {
+            tour.likes.push(req.userId);
+        } else {
+            course.likes = course.likes.filter((id) => id !== String(req.userId));
+        }
+
+        const updatedCourse = await CourseModal.findByIdAndUpdate(id, tour, {
+            new: true,
+        });
+
+        res.status(200).json(updatedCourse);
+    } catch (error) {
+        res.status(404).json({ message: error.message });
     }
 };
